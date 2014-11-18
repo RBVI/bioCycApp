@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.ucsf.rbvi.bioCycApp.internal.model.BioCycManager;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListDatabasesTaskFactory;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.SetDatabaseTaskFactory;
 import edu.ucsf.rbvi.bioCycApp.internal.webservices.BioCycClient;
 
 public class CyActivator extends AbstractCyActivator {
@@ -72,6 +74,24 @@ public class CyActivator extends AbstractCyActivator {
 		manager.loadDatabases(true);
 
 		// Commands
+		// Load Databases Command
+		ListDatabasesTaskFactory listDatabases = new ListDatabasesTaskFactory(manager);
+		Properties listDatabasesProps = new Properties();
+    listDatabasesProps.setProperty(COMMAND, "list databases");
+    listDatabasesProps.setProperty(COMMAND_NAMESPACE, "biocyc");
+    listDatabasesProps.setProperty(COMMAND_DESCRIPTION, "List available databases");
+    listDatabasesProps.setProperty(IN_MENU_BAR, "false");
+    registerService(bc, listDatabases, TaskFactory.class, listDatabasesProps);
+
+		// Set Database Command
+		SetDatabaseTaskFactory setDatabase = new SetDatabaseTaskFactory(manager);
+		Properties setDatabaseProps = new Properties();
+    setDatabaseProps.setProperty(COMMAND, "set database");
+    setDatabaseProps.setProperty(COMMAND_NAMESPACE, "biocyc");
+    setDatabaseProps.setProperty(COMMAND_DESCRIPTION, "Set default database");
+    setDatabaseProps.setProperty(IN_MENU_BAR, "false");
+    registerService(bc, setDatabase, TaskFactory.class, setDatabaseProps);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

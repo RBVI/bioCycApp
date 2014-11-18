@@ -39,6 +39,7 @@ public class BioCycManager {
 	QueryHandler handler;
 	BioCycClient client = null;
 	Database currentDatabase = null;
+	String base_uri = "http://websvc.biocyc.org/";
 
 	private enum TopSpecies {
 		BSUBITILIS("Bacillus subtilis", "BSUB"),
@@ -67,7 +68,11 @@ public class BioCycManager {
 	}
 
 	public String getURI() {
-		return "http://websvc.biocyc.org/";
+		return base_uri;
+	}
+
+	public void setURI(String uri) {
+		base_uri = uri;
 	}
 
 	public void loadDatabases(boolean async) {

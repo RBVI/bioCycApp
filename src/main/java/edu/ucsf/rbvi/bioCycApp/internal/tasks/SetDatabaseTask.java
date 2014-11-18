@@ -13,15 +13,26 @@ import edu.ucsf.rbvi.bioCycApp.internal.model.BioCycManager;
 import edu.ucsf.rbvi.bioCycApp.internal.model.Database;
 
 
-public class LoadDatabasesTask extends AbstractTask {
+public class SetDatabaseTask extends AbstractTask {
 	BioCycManager manager;
 
-	public LoadDatabasesTask (BioCycManager manager) {
+	@Tunable (description="Org ID of database", context="nogui")
+	public String id = null;
+
+	public SetDatabaseTask (BioCycManager manager) {
 		this.manager = manager;
 	}
 
 	public void run(TaskMonitor monitor) {
-		manager.loadDatabases(false);
+		List<Database> databases = manager.getDatabases();
+		for (Database d: databases) {
+			if (d.getOrgID().equalsIgnoreCase(id)) {
+				manager.setDefaultDatabase(d);
+				monitor.setStatusMessage("Set default database to "+d);
+				return;
+			}
+		}
+		monitor.setStatusMessage("Can not find database: "+id);
 	}
 
 }

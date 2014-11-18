@@ -20,6 +20,8 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -82,6 +84,8 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 		databaseCombo.setActionCommand(ACTION_SET_DATABASE);
 		Object dbArray[] = getDatabases();
 		databaseCombo.setModel(new DefaultComboBoxModel(dbArray));
+		if (manager.getDefaultDatabase() != null)
+			databaseCombo.setSelectedItem(manager.getDefaultDatabase());
 
 		searchText = new JTextField();
 		searchText.setActionCommand(ACTION_SEARCH);
@@ -131,10 +135,13 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 	public void actionPerformed(ActionEvent e) {
 		String action = e.getActionCommand();
 		if(ACTION_SEARCH.equals(action)) {
+			// Get the search text
+			// Get the database
+			// Do the query as a task
+/*
 			FindPathwaysByTextParameters request = new FindPathwaysByTextParameters();
 			request.query = searchText.getText();
 			request.db = ((Database)databaseCombo.getSelectedItem()).getOrgID();
-/*
 			try {
 				WebServiceClientManager.getCyWebServiceEventSupport().fireCyWebServiceEvent(
 					new CyWebServiceEvent<FindPathwaysByTextParameters>(
@@ -166,18 +173,13 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 			defaultDatabase = (Database) databaseCombo.getSelectedItem();
 			manager.setDefaultDatabase(defaultDatabase);
 		} else if (ACTION_SET_WEBSERVICE.equals(action)) {
-/*
 			String url = webServiceText.getText();
 			if (url == null || url.length() == 0)
-				url = BioCycPlugin.DEFAULT_URL;
-			manager.setProp(manager.WEBSERVICE_URL, url);
-			client.getStub();
-			// Now, update the text again
+				manager.setURI(url);
 			webServiceText.setText(url);
-			resetDatabases();
-*/
+			manager.loadDatabases(false);
+			updateDatabases();
 		}
-	}
 	}
 
 	public void updateDatabases() {
@@ -192,10 +194,21 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 			foo[0] = "Initializing...";
 			return foo;
 		}
-		Object[] dbArray = manager.getMainDatabases().toArray();
+		List<Database>databases = new ArrayList<Database>(manager.getMainDatabases());
+		Database defaultDb = manager.getDefaultDatabase();
+		if (defaultDb != null) {
+			// We've already set a default, make sure it's in our list
+			boolean found = false;
+			for (Database db: databases) {
+				if (db.getOrgID().equals(defaultDb.getOrgID())) {
+					found = true;
+					break;
+				}
+			}
+			if (found == false) databases.add(defaultDb);
+		}
+		Object[] dbArray = databases.toArray();
 		Arrays.sort(dbArray);
-		for (Object db: dbArray)
-			System.out.println("Database: "+db);
 		return dbArray;
 	}
 
