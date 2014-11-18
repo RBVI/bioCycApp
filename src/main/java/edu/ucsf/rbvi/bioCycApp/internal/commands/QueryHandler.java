@@ -191,6 +191,10 @@ public class QueryHandler {
 		return objectQuery("compounds", database, text);
 	}
 
+	public String reactionQuery(String database, String text) {
+		return objectQuery("reactions", database, text);
+	}
+
 	public String pathwaysWithGeneQuery(String database, String text) {
 		if (text == null || text.length() == 0)
 			return "[p:x<-"+database+"^^genes, p<-"+database+"^^pathways, x in (pathway-to-genes p)]";

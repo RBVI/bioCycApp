@@ -27,6 +27,12 @@ import org.slf4j.LoggerFactory;
 
 import edu.ucsf.rbvi.bioCycApp.internal.model.BioCycManager;
 import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListDatabasesTaskFactory;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListGenesTaskFactory;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListPathwaysTaskFactory;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListProteinsTaskFactory;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListReactionsTaskFactory;
+// import edu.ucsf.rbvi.bioCycApp.internal.tasks.LoadPathwayTaskFactory;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.OpenResourceTaskFactory;
 import edu.ucsf.rbvi.bioCycApp.internal.tasks.SetDatabaseTaskFactory;
 import edu.ucsf.rbvi.bioCycApp.internal.webservices.BioCycClient;
 
@@ -82,6 +88,66 @@ public class CyActivator extends AbstractCyActivator {
     listDatabasesProps.setProperty(COMMAND_DESCRIPTION, "List available databases");
     listDatabasesProps.setProperty(IN_MENU_BAR, "false");
     registerService(bc, listDatabases, TaskFactory.class, listDatabasesProps);
+
+		// List Genes
+		ListGenesTaskFactory listGenes = new ListGenesTaskFactory(manager);
+		Properties listGenesProps = new Properties();
+    listGenesProps.setProperty(COMMAND, "list genes");
+    listGenesProps.setProperty(COMMAND_NAMESPACE, "biocyc");
+    listGenesProps.setProperty(COMMAND_DESCRIPTION, "List all of the genes that meet the criteria");
+    listGenesProps.setProperty(IN_MENU_BAR, "false");
+    registerService(bc, listGenes, TaskFactory.class, listGenesProps);
+
+		// List Pathways
+		ListPathwaysTaskFactory listPathways = new ListPathwaysTaskFactory(manager);
+		Properties listPathwaysProps = new Properties();
+    listPathwaysProps.setProperty(COMMAND, "list pathways");
+    listPathwaysProps.setProperty(COMMAND_NAMESPACE, "biocyc");
+    listPathwaysProps.setProperty(COMMAND_DESCRIPTION, "List all of the pathways that meet the criteria");
+    listPathwaysProps.setProperty(IN_MENU_BAR, "false");
+    registerService(bc, listPathways, TaskFactory.class, listPathwaysProps);
+
+		// List Proteins
+		ListProteinsTaskFactory listProteins = new ListProteinsTaskFactory(manager);
+		Properties listProteinsProps = new Properties();
+    listProteinsProps.setProperty(COMMAND, "list proteins");
+    listProteinsProps.setProperty(COMMAND_NAMESPACE, "biocyc");
+    listProteinsProps.setProperty(COMMAND_DESCRIPTION, "List all of the proteins that meet the criteria");
+    listProteinsProps.setProperty(IN_MENU_BAR, "false");
+    registerService(bc, listProteins, TaskFactory.class, listProteinsProps);
+
+		// List Reactions
+		ListReactionsTaskFactory listReactions = new ListReactionsTaskFactory(manager);
+		Properties listReactionsProps = new Properties();
+    listReactionsProps.setProperty(COMMAND, "list reactions");
+    listReactionsProps.setProperty(COMMAND_NAMESPACE, "biocyc");
+    listReactionsProps.setProperty(COMMAND_DESCRIPTION, "List all of the reactions that meet the criteria");
+    listReactionsProps.setProperty(IN_MENU_BAR, "false");
+    registerService(bc, listReactions, TaskFactory.class, listReactionsProps);
+
+		// Search Pathways
+		// Search Reactions
+
+		/*
+		// Load Pathway 
+		LoadPathwayTaskFactory loadPathway = new LoadPathwayTaskFactory(manager);
+		Properties loadPathwayProps = new Properties();
+    loadPathwayProps.setProperty(COMMAND, "load pathway");
+    loadPathwayProps.setProperty(COMMAND_NAMESPACE, "biocyc");
+    loadPathwayProps.setProperty(COMMAND_DESCRIPTION, "Load a pathway in biopax format");
+    loadPathwayProps.setProperty(IN_MENU_BAR, "false");
+    registerService(bc, loadPathway, TaskFactory.class, loadPathwayProps);
+		*/
+
+		// Open Resource
+		OpenResourceTaskFactory openResource = new OpenResourceTaskFactory(manager);
+		Properties openResourceProps = new Properties();
+    openResourceProps.setProperty(COMMAND, "open resource");
+    openResourceProps.setProperty(COMMAND_NAMESPACE, "biocyc");
+    openResourceProps.setProperty(COMMAND_DESCRIPTION, "Open a Pathway Tools Resource");
+    openResourceProps.setProperty(IN_MENU_BAR, "false");
+    registerService(bc, openResource, TaskFactory.class, openResourceProps);
+
 
 		// Set Database Command
 		SetDatabaseTaskFactory setDatabase = new SetDatabaseTaskFactory(manager);

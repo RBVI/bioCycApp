@@ -34,6 +34,7 @@ package edu.ucsf.rbvi.bioCycApp.internal.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -65,6 +66,19 @@ public class Compound extends Reactant {
 				}
 			}
 		}
+	}
+
+	public static List<Compound> getCompounds(Document response) {
+		NodeList cNodes = response.getElementsByTagName("Compound");
+		if (cNodes == null || cNodes.getLength() == 0) return null;
+
+		List<Compound> compounds = new ArrayList<Compound>();
+		for (int index = 0; index < cNodes.getLength(); index++) {
+			Compound c = new Compound((Element)cNodes.item(index));
+			if (c.getID() != null)
+				compounds.add(c);
+		}
+		return compounds;
 	}
 
 	public Element getCML() { return cml; }

@@ -16,6 +16,8 @@
 //
 package edu.ucsf.rbvi.bioCycApp.internal.model;
 
+import java.net.URL;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,6 +26,8 @@ import java.util.Map;
 
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.service.util.CyServiceRegistrar;
+import org.cytoscape.task.read.LoadNetworkURLTaskFactory;
+import org.cytoscape.work.SynchronousTaskManager;
 
 import edu.ucsf.rbvi.bioCycApp.internal.commands.QueryHandler;
 import edu.ucsf.rbvi.bioCycApp.internal.model.Database;
@@ -34,6 +38,8 @@ import edu.ucsf.rbvi.bioCycApp.internal.webservices.BioCycClient;
 public class BioCycManager {
 	CyApplicationManager appManager;
 	CyServiceRegistrar serviceRegistrar;
+	SynchronousTaskManager taskManager;
+	LoadNetworkURLTaskFactory loadNetworkTaskFactory;
 	List<Database> databases = null;
 	Map<String, List<Database>> speciesMap = null;
 	QueryHandler handler;
@@ -64,6 +70,8 @@ public class BioCycManager {
 		speciesMap = new HashMap<String, List<Database>>();
 		this.appManager = appManager;
 		this.serviceRegistrar = serviceRegistrar;
+		taskManager = serviceRegistrar.getService(SynchronousTaskManager.class);
+		loadNetworkTaskFactory = serviceRegistrar.getService(LoadNetworkURLTaskFactory.class);
 		this.handler = null;
 	}
 
@@ -104,6 +112,78 @@ public class BioCycManager {
 
 	public List<Database> getDatabases() {
 		return databases;
+	}
+
+	public List<Gene> getGenes(String database, String name) {
+		if (handler == null) handler = new QueryHandler(this);
+		String queryString = handler.geneQuery(database, name);
+		List<Gene> genes = Gene.getGenes(handler.query(queryString));
+		return genes;
+	}
+
+	public List<Protein> getProteins(String database, String name) {
+		if (handler == null) handler = new QueryHandler(this);
+		String queryString = handler.proteinQuery(database, name);
+		List<Protein> proteins = Protein.getProteins(handler.query(queryString));
+		return proteins;
+	}
+
+	public List<Compound> getCompounds(String database, String name) {
+		if (handler == null) handler = new QueryHandler(this);
+		String queryString = handler.compoundQuery(database, name);
+		List<Compound> compounds = Compound.getCompounds(handler.query(queryString));
+		return compounds;
+	}
+
+	public List<Pathway> getPathways(String database, String name) {
+		if (handler == null) handler = new QueryHandler(this);
+		String queryString = handler.pathwayQuery(database, name);
+		List<Pathway> pathways = Pathway.getPathways(handler.query(queryString));
+		return pathways;
+	}
+
+	public List<Reaction> getReactions(String database, String name) {
+		if (handler == null) handler = new QueryHandler(this);
+		String queryString = handler.reactionQuery(database, name);
+		List<Reaction> reactions = Reaction.getReactions(handler.query(queryString));
+		return reactions;
+	}
+
+	public List<Pathway> searchPathways(String database, String name) {
+		if (handler == null) handler = new QueryHandler(this);
+		String query = "[x:x<-"+database+"^^pathways";
+		if (name != null) {
+			query = query+","+database+"~"+name+" in (pathway-to-genes x)";
+		}
+		query = query + "]";
+
+		List<Pathway> pathways = Pathway.getPathways(handler.query(query));
+		return pathways;
+	}
+
+	public List<Reaction> searchReactions(String database, String name) {
+		if (handler == null) handler = new QueryHandler(this);
+		String query = "[x:x<-"+database+"^^reactions";
+		if (name != null) {
+			query = query+","+database+"~"+name+" in (reaction-to-genes x)";
+		}
+		query = query + "]";
+
+		List<Reaction> reactions = Reaction.getReactions(handler.query(query));
+		return reactions;
+	}
+
+	public void loadPathway(String database, String pathway) throws MalformedURLException {
+		String query = getURI()+database+"/pathway-biopax?type=2&object="+pathway;
+		taskManager.execute(loadNetworkTaskFactory.loadCyNetworks(new URL(query)));
+	}
+
+	public Database getDatabase(String orgID) {
+		for (Database d: databases) {
+			if (d.getOrgID().equalsIgnoreCase(orgID))
+				return d;
+		}
+		return null;
 	}
 
 	public List<Database> getMainDatabases() {
