@@ -42,23 +42,30 @@ import javax.swing.ListSelectionModel;
 import org.cytoscape.io.webservice.NetworkImportWebServiceClient;
 import org.cytoscape.io.webservice.SearchWebServiceClient;
 import org.cytoscape.io.webservice.swing.AbstractWebServiceGUIClient;
+import org.cytoscape.work.FinishStatus;
+import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskIterator;
+import org.cytoscape.work.TaskObserver;
 
 
 import edu.ucsf.rbvi.bioCycApp.internal.model.BioCycManager;
 import edu.ucsf.rbvi.bioCycApp.internal.model.Database;
 import edu.ucsf.rbvi.bioCycApp.internal.model.Pathway;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.SearchPathwaysTask;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.SearchPathwaysTaskFactory;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.LoadPathwayTaskFactory;
 
 /**
  * WebserviceClient implementation, for accessing the
  * BioCyc webservice in a standard way from within Cytoscape.
  */
 public class BioCycClient extends AbstractWebServiceGUIClient 
-                          implements SearchWebServiceClient, NetworkImportWebServiceClient, ActionListener {
+                          implements SearchWebServiceClient, NetworkImportWebServiceClient, 
+	                                   TaskObserver, ActionListener {
 	private static final String DISPLAY_NAME = "BioCyc Web Service Client";
 	private static final String CLIENT_ID = "biocyc";
-	private BioCycManager manager;
 	private boolean initialized = false;
+	final BioCycManager manager;
 
 	private static final String ACTION_SEARCH = "Search";
 	private static final String ACTION_SET_DATABASE = "Set Database";
@@ -71,7 +78,7 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 	JTable resultTable;
 	ListWithPropertiesTableModel<ResultProperty, ResultRow> tableModel;
 
-	public BioCycClient(BioCycManager manager) {
+	public BioCycClient(final BioCycManager manager) {
 		super(manager.getURI(), CLIENT_ID, DISPLAY_NAME);
 		this.manager = manager;
 		this.manager.setClient(this);
@@ -107,7 +114,9 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 				if (e.getClickCount() == 2) {
 					int row = resultTable.getSelectedRow();
 					ResultRow selected = tableModel.getRow(row);
-					// openNetwork(selected);
+					Pathway pathway = selected.getResult();
+					LoadPathwayTaskFactory factory = new LoadPathwayTaskFactory(manager, pathway);
+					manager.execute(factory, null);
 				}
 			}
 		});
@@ -136,39 +145,15 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 		String action = e.getActionCommand();
 		if(ACTION_SEARCH.equals(action)) {
 			// Get the search text
+			String queryText = searchText.getText();
+
 			// Get the database
+			String db = ((Database)databaseCombo.getSelectedItem()).getOrgID();
+			if (db == null) db = manager.getDefaultDatabase().getOrgID();
+
 			// Do the query as a task
-/*
-			FindPathwaysByTextParameters request = new FindPathwaysByTextParameters();
-			request.query = searchText.getText();
-			request.db = ((Database)databaseCombo.getSelectedItem()).getOrgID();
-			try {
-				WebServiceClientManager.getCyWebServiceEventSupport().fireCyWebServiceEvent(
-					new CyWebServiceEvent<FindPathwaysByTextParameters>(
-						client.getClientID(),
-						WSEventType.SEARCH_DATABASE,
-						request
-					)
-				);
-			} catch (CyWebServiceException ex) {
-				switch(ex.getErrorCode()) {
-				case NO_RESULT:
-					JOptionPane.showMessageDialog(
-							this, "The search didn't return any results",
-							"No results", JOptionPane.INFORMATION_MESSAGE
-					);
-					break;
-				case OPERATION_NOT_SUPPORTED:
-				case REMOTE_EXEC_FAILED:
-					JOptionPane.showMessageDialog(
-						this, "Error: " + ex.getErrorCode() + ". See log for details",
-						"Error", JOptionPane.ERROR_MESSAGE
-					);
-					break;
-				}
-				ex.printStackTrace();
-			}
-*/
+			SearchPathwaysTaskFactory taskFactory = new SearchPathwaysTaskFactory(manager, db, queryText);
+			manager.execute(taskFactory, this);
 		} else if (ACTION_SET_DATABASE.equals(action)) {
 			defaultDatabase = (Database) databaseCombo.getSelectedItem();
 			manager.setDefaultDatabase(defaultDatabase);
@@ -236,63 +221,29 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 		}
 	}
 
-
-/*
-	class SearchTask implements Task, CyWebServiceEventListener {
-
-		FindPathwaysByTextParameters query;
-		TaskMonitor monitor;
-
-		public SearchTask(FindPathwaysByTextParameters query) {
-			this.query = query;
-			WebServiceClientManager.getCyWebServiceEventSupport()
-			.addCyWebServiceEventListener(this);
-		}
-
-		public String getTitle() {
-			return "Searching...";
-		}
-
-		public void run() {
-			try {
-				List<Pathway> result = getStub().findPathwaysByText(query.query, query.db);
-				gui.setResults(result);
-				if(result == null || result.size() == 0) {
-					SwingUtilities.invokeLater(new Runnable() {
-						public void run() {
-							JOptionPane.showMessageDialog(
-									gui, "The search didn't return any results",
-									"No results", JOptionPane.INFORMATION_MESSAGE
-							);
-						}
-					});
-
-				}
-			} catch (final Exception e) {
-				logger.error("Error while searching", e);
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						JOptionPane.showMessageDialog(
-								gui, "Error: " + e.getMessage() + ". See log for details",
-								"Error", JOptionPane.ERROR_MESSAGE
-						);
-					}
+	public void taskFinished(ObservableTask task) {
+		if (task instanceof SearchPathwaysTask) {
+			// Get the results
+			List<Pathway> results = (List<Pathway>)task.getResults(List.class);
+			// Put them in the search box
+			tableModel =
+				new ListWithPropertiesTableModel<ResultProperty, ResultRow>();
+			if(results != null) {
+				tableModel.setColumns(new ResultProperty[] {
+						ResultProperty.ID,
+						ResultProperty.NAME,
+						ResultProperty.SPECIES,
 				});
+				resultTable.setModel(tableModel);
+				for(Pathway p : results) {
+					tableModel.addRow(new ResultRow(p));
+				}
 			}
-		}
-
-		public void halt() {
-		}
-
-		public void setTaskMonitor(TaskMonitor m)
-		throws IllegalThreadStateException {
-			this.monitor = m;
-		}
-
-		public void executeService(CyWebServiceEvent event)
-		throws CyWebServiceException {
+			resultTable.setModel(tableModel);
 		}
 	}
-*/
+
+	public void allFinished(FinishStatus finishStatus) {
+	}
 
 }

@@ -31,8 +31,9 @@ import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListGenesTaskFactory;
 import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListPathwaysTaskFactory;
 import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListProteinsTaskFactory;
 import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListReactionsTaskFactory;
-// import edu.ucsf.rbvi.bioCycApp.internal.tasks.LoadPathwayTaskFactory;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.LoadPathwayTaskFactory;
 import edu.ucsf.rbvi.bioCycApp.internal.tasks.OpenResourceTaskFactory;
+import edu.ucsf.rbvi.bioCycApp.internal.tasks.SearchPathwaysTaskFactory;
 import edu.ucsf.rbvi.bioCycApp.internal.tasks.SetDatabaseTaskFactory;
 import edu.ucsf.rbvi.bioCycApp.internal.webservices.BioCycClient;
 
@@ -126,9 +127,16 @@ public class CyActivator extends AbstractCyActivator {
     registerService(bc, listReactions, TaskFactory.class, listReactionsProps);
 
 		// Search Pathways
+		SearchPathwaysTaskFactory searchPathways = new SearchPathwaysTaskFactory(manager);
+		Properties searchPathwaysProps = new Properties();
+    searchPathwaysProps.setProperty(COMMAND, "search pathways");
+    searchPathwaysProps.setProperty(COMMAND_NAMESPACE, "biocyc");
+    searchPathwaysProps.setProperty(COMMAND_DESCRIPTION, "Search for pathways");
+    searchPathwaysProps.setProperty(IN_MENU_BAR, "false");
+    registerService(bc, searchPathways, TaskFactory.class, searchPathwaysProps);
+
 		// Search Reactions
 
-		/*
 		// Load Pathway 
 		LoadPathwayTaskFactory loadPathway = new LoadPathwayTaskFactory(manager);
 		Properties loadPathwayProps = new Properties();
@@ -137,7 +145,6 @@ public class CyActivator extends AbstractCyActivator {
     loadPathwayProps.setProperty(COMMAND_DESCRIPTION, "Load a pathway in biopax format");
     loadPathwayProps.setProperty(IN_MENU_BAR, "false");
     registerService(bc, loadPathway, TaskFactory.class, loadPathwayProps);
-		*/
 
 		// Open Resource
 		OpenResourceTaskFactory openResource = new OpenResourceTaskFactory(manager);

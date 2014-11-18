@@ -28,6 +28,9 @@ import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.read.LoadNetworkURLTaskFactory;
 import org.cytoscape.work.SynchronousTaskManager;
+import org.cytoscape.work.TaskFactory;
+import org.cytoscape.work.TaskManager;
+import org.cytoscape.work.TaskObserver;
 
 import edu.ucsf.rbvi.bioCycApp.internal.commands.QueryHandler;
 import edu.ucsf.rbvi.bioCycApp.internal.model.Database;
@@ -38,7 +41,8 @@ import edu.ucsf.rbvi.bioCycApp.internal.webservices.BioCycClient;
 public class BioCycManager {
 	CyApplicationManager appManager;
 	CyServiceRegistrar serviceRegistrar;
-	SynchronousTaskManager taskManager;
+	SynchronousTaskManager syncTaskManager;
+	TaskManager taskManager;
 	LoadNetworkURLTaskFactory loadNetworkTaskFactory;
 	List<Database> databases = null;
 	Map<String, List<Database>> speciesMap = null;
@@ -70,7 +74,8 @@ public class BioCycManager {
 		speciesMap = new HashMap<String, List<Database>>();
 		this.appManager = appManager;
 		this.serviceRegistrar = serviceRegistrar;
-		taskManager = serviceRegistrar.getService(SynchronousTaskManager.class);
+		syncTaskManager = serviceRegistrar.getService(SynchronousTaskManager.class);
+		taskManager = serviceRegistrar.getService(TaskManager.class);
 		loadNetworkTaskFactory = serviceRegistrar.getService(LoadNetworkURLTaskFactory.class);
 		this.handler = null;
 	}
@@ -149,16 +154,9 @@ public class BioCycManager {
 		return reactions;
 	}
 
-	public List<Pathway> searchPathways(String database, String name) {
+	public List<Pathway> searchPathways(String database, String text) {
 		if (handler == null) handler = new QueryHandler(this);
-		String query = "[x:x<-"+database+"^^pathways";
-		if (name != null) {
-			query = query+","+database+"~"+name+" in (pathway-to-genes x)";
-		}
-		query = query + "]";
-
-		List<Pathway> pathways = Pathway.getPathways(handler.query(query));
-		return pathways;
+		return handler.searchForPathways(database, text);
 	}
 
 	public List<Reaction> searchReactions(String database, String name) {
@@ -175,7 +173,8 @@ public class BioCycManager {
 
 	public void loadPathway(String database, String pathway) throws MalformedURLException {
 		String query = getURI()+database+"/pathway-biopax?type=2&object="+pathway;
-		taskManager.execute(loadNetworkTaskFactory.loadCyNetworks(new URL(query)));
+		System.out.println("Looking for network "+query);
+		syncTaskManager.execute(loadNetworkTaskFactory.loadCyNetworks(new URL(query)));
 	}
 
 	public Database getDatabase(String orgID) {
@@ -204,6 +203,13 @@ public class BioCycManager {
 	}
 
 	public Database getDefaultDatabase() { return currentDatabase; }
+
+	public void execute(TaskFactory factory, TaskObserver observer) {
+		if (observer == null)
+			taskManager.execute(factory.createTaskIterator());
+		else
+			taskManager.execute(factory.createTaskIterator(), observer);
+	}
 
 	private void createMap(List<Database> dbs) {
 		speciesMap.clear();
