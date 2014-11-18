@@ -169,6 +169,17 @@ public class QueryHandler {
 			for (Pathway p: pathways) {
 				if (!pathwayMap.containsKey(p.getFrameID()))
 					pathwayMap.put(p.getFrameID(), p);
+				/*
+				System.out.println("Found pathway '"+p.getID()+"':");
+				System.out.println("    orgID: "+p.getOrgID());
+				System.out.println("    frameID: "+p.getFrameID());
+				System.out.println("    commonName: "+p.getCommonName());
+				System.out.println("    comment: "+p.getComment());
+				if (p.getReactions() == null)
+					System.out.println("    reactions: none");
+				else
+					System.out.println("    reactions: "+p.getReactions().size());
+				*/
 			}
 		}
 

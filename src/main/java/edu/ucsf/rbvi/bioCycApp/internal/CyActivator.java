@@ -13,6 +13,7 @@ import java.util.Properties;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.events.SetCurrentNetworkListener;
 import org.cytoscape.application.swing.CySwingApplication;
+import org.cytoscape.model.events.NetworkAddedListener;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.NetworkTaskFactory;
@@ -25,6 +26,7 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.ucsf.rbvi.bioCycApp.internal.commands.ParseCMLAttributes;
 import edu.ucsf.rbvi.bioCycApp.internal.model.BioCycManager;
 import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListDatabasesTaskFactory;
 import edu.ucsf.rbvi.bioCycApp.internal.tasks.ListGenesTaskFactory;
@@ -64,18 +66,15 @@ public class CyActivator extends AbstractCyActivator {
 		CyApplicationManager appManager = getService(bc, CyApplicationManager.class);
 		CyServiceRegistrar serviceRegistrar = getService(bc, CyServiceRegistrar.class);
 
-		System.out.println("Creating manager");
-
 		// Create our manager object
 		BioCycManager manager = new BioCycManager(appManager, serviceRegistrar);
-
-		System.out.println("Creating client");
 
 		// Create our webservices client
 		BioCycClient client = new BioCycClient(manager);
 		registerAllServices(bc, client, new Properties());
 
-		System.out.println("Loading databases");
+		ParseCMLAttributes parseCML = new ParseCMLAttributes(manager);
+		registerService(bc, parseCML, NetworkAddedListener.class, new Properties());
 
 		// Launch a thread to load the databases
 		manager.loadDatabases(true);

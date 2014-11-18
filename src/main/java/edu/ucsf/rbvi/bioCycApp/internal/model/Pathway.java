@@ -93,7 +93,7 @@ public class Pathway implements Comparable<Pathway> {
 		List<Pathway> pathways = new ArrayList<Pathway>();
 		for (int index = 0; index < pNodes.getLength(); index++) {
 			Pathway p = new Pathway((Element)pNodes.item(index));
-			if (p.getID() != null)
+			if (p.getID() != null && p.getReactions() != null)
 				pathways.add(p);
 		}
 		return pathways;

@@ -31,7 +31,8 @@ public class LoadPathwayTask extends AbstractTask {
 
 	public LoadPathwayTask (BioCycManager manager, Pathway pathway) {
 		this.manager = manager;
-		this.pathwayName = pathway.getID();
+		this.pathwayName = pathway.getFrameID();
+		this.database = pathway.getOrgID();
 	}
 
 	public void run(TaskMonitor monitor) {
