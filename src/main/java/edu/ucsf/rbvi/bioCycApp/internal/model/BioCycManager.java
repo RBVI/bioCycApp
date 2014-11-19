@@ -53,12 +53,13 @@ public class BioCycManager {
 
 	private enum TopSpecies {
 		BSUBITILIS("Bacillus subtilis", "BSUB"),
-		ECOLI("Escherichia coli", "MG1655"),
+		ECOLI("Escherichia coli", "ECOLI"),
 		HUMAN("Homo sapiens", "HUMAN"),
 		MOUSE("Mus musculus", "MOUSE"),
 		TB("Mycobacterium tuberculosis", "MTBRV"),
 		METACYC("MetaCyc", "META"),
 		YEAST("Saccharomyces cerevisiae", "YEAST");
+		// Add "Other", and do a species->strain double selection?
 
 		private String species;
 		private String orgID;
