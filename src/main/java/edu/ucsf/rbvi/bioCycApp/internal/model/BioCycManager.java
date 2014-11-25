@@ -58,7 +58,8 @@ public class BioCycManager {
 		MOUSE("Mus musculus", "MOUSE"),
 		TB("Mycobacterium tuberculosis", "MTBRV"),
 		METACYC("MetaCyc", "META"),
-		YEAST("Saccharomyces cerevisiae", "YEAST");
+		YEAST("Saccharomyces cerevisiae", "YEAST"),
+		OTHER("-- Other databases --", "OTHER");
 		// Add "Other", and do a species->strain double selection?
 
 		private String species;
@@ -95,10 +96,10 @@ public class BioCycManager {
 			Thread t = new Thread() {
 				public void run() {
 					databases = null;
-					System.out.println("Getting databases");
+					// System.out.println("Getting databases");
 					databases = Database.getDatabases(handler.query("dbs"));
 					createMap(databases);
-					System.out.println("Found "+databases.size()+" databases");
+					// System.out.println("Found "+databases.size()+" databases");
 					if (client != null)
 						client.updateDatabases();
 				}
@@ -118,6 +119,16 @@ public class BioCycManager {
 
 	public List<Database> getDatabases() {
 		return databases;
+	}
+
+	public List<Database> getDatabases(String species) {
+		if (speciesMap.containsKey(species))
+			return speciesMap.get(species);
+		return null;
+	}
+
+	public List<String> getSpecies() {
+		return new ArrayList<String>(speciesMap.keySet());
 	}
 
 	public List<Gene> getGenes(String database, String name) {
@@ -194,16 +205,27 @@ public class BioCycManager {
 					if (db.getOrgID().equals(ts.getOrgID()))
 						topDatabases.add(db);
 				}
+			} else if (ts.getOrgID().equals("OTHER")) {
+				topDatabases.add(new Database(ts.getSpecies(), ts.getOrgID()));
 			}
 		}
+		if (currentDatabase != null && !topDatabases.contains(currentDatabase))
+			topDatabases.add(currentDatabase);
 		return topDatabases;
 	}
 
 	public void setDefaultDatabase(Database db) {
+		System.out.println("Setting default database to: "+db);
 		currentDatabase = db;
 	}
 
-	public Database getDefaultDatabase() { return currentDatabase; }
+	public Database getDefaultDatabase() { 
+		if (currentDatabase == null) {
+			if (speciesMap.containsKey("Homo sapiens"))
+				return speciesMap.get("Homo sapiens").get(0);
+		}
+		return currentDatabase; 
+	}
 
 	public void execute(TaskFactory factory, TaskObserver observer) {
 		if (observer == null)

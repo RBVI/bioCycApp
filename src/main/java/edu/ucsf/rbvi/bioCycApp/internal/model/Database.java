@@ -56,6 +56,11 @@ public class Database implements Comparable<Database> {
 		this.dbLink = DomUtils.getDbLinks(database);
 	}
 
+	public Database(String species, String orgid) {
+		this.species = species;
+		this.orgid = orgid;
+	}
+
 	public int compareTo(Database o2) {
 		return toString().compareTo(o2.toString());
 	}

@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.awt.Container;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -31,6 +33,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -38,6 +41,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 
 import org.cytoscape.io.webservice.NetworkImportWebServiceClient;
 import org.cytoscape.io.webservice.SearchWebServiceClient;
@@ -71,7 +75,6 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 	private static final String ACTION_SET_DATABASE = "Set Database";
 	private static final String ACTION_SET_WEBSERVICE = "Set Web Service URL";
 
-	Database defaultDatabase = null;
 	JComboBox databaseCombo;
 	JTextField searchText;
 	JTextField webServiceText;
@@ -83,7 +86,7 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 		this.manager = manager;
 		this.manager.setClient(this);
 
-		System.out.println("BioCycClient");
+		// System.out.println("BioCycClient");
 
 		// Create the GUI and add it to the standard GUI
 		databaseCombo = new JComboBox();
@@ -155,8 +158,14 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 			SearchPathwaysTaskFactory taskFactory = new SearchPathwaysTaskFactory(manager, db, queryText);
 			manager.execute(taskFactory, this);
 		} else if (ACTION_SET_DATABASE.equals(action)) {
-			defaultDatabase = (Database) databaseCombo.getSelectedItem();
-			manager.setDefaultDatabase(defaultDatabase);
+			// Check for Other and pop up double-dialog with all databases
+			Database database = (Database) databaseCombo.getSelectedItem();
+			if (database.getOrgID().equals("OTHER")) {
+				DatabaseSelector selector = new DatabaseSelector(manager, this);
+				selector.setVisible(true); // This is modal
+			} else {
+				manager.setDefaultDatabase(database);
+			}
 		} else if (ACTION_SET_WEBSERVICE.equals(action)) {
 			String url = webServiceText.getText();
 			if (url == null || url.length() == 0)
@@ -168,9 +177,25 @@ public class BioCycClient extends AbstractWebServiceGUIClient
 	}
 
 	public void updateDatabases() {
-		System.out.println("Updating databases");
 		databaseCombo.setModel(new DefaultComboBoxModel(getDatabases()));
 		databaseCombo.setSelectedItem(manager.getDefaultDatabase());
+		// May need to repack our parent
+		if (getParentDialog() != null) {
+			getParentDialog().pack();
+			getParentDialog().revalidate();
+		}
+	}
+
+	public JDialog getParentDialog() {
+		Container gui = super.gui;
+		Container parent;
+		while ((parent = gui.getParent()) != null) {
+			if (parent instanceof JDialog) 
+				return (JDialog)parent;
+			else
+					gui = parent;
+	}
+		return null;
 	}
 
 	private Object[] getDatabases() {
